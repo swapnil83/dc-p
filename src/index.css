@@ -1,0 +1,40 @@
+@font-face {
+    font-family: 'Poppins';
+    src: url('/fonts/poppins.woff2') format('woff2'),
+        url('/fonts/poppins.woff') format('woff');
+    font-weight: 300, 400, 500, 600, 700;
+    font-style: normal;
+}
+
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
+body::-webkit-scrollbar {
+    width: 10px;
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: #b5b5ba;
+    border-radius: 16px;
+    -webkit-border-radius: 16px;
+}
+
+body::-webkit-scrollbar-track {
+    background-color: #ebebeb;
+}
+
+.table-container {
+    transition: all 0.5s ease-in-out;
+    padding-bottom: 20px;
+}
+
+.table-container::-webkit-scrollbar {
+    height: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: #b5b5ba;
+    border-radius: 16px;
+    -webkit-border-radius: 16px;
+}
