@@ -153,12 +153,14 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                     status: response.baseResponse.responseStatus,
                     calendarization: response.dateRangeList.map((item: any) => ({
                         ...item,
-                        startDate: formatDate(item.startDate),
-                        endDate: formatDate(item.endDate),
+                        startDate: item.startDate ? formatDate(item.startDate) : null,
+                        endDate: item.endDate ? formatDate(item.endDate) : null,
                     }))
                 });
+                const findNullDateCustId = response.dateRangeList.find((i) => (i.startDate === null && i.endDate === null));
                 updateDefaultCapacityFilterState({
                     selectedCalendarization: "defaultView",
+                    selectedCustDateId: findNullDateCustId?.custDateId,
                 });
                 setCalendarizationFieldVisibility(true);
             } else {
@@ -339,8 +341,25 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
     const handleCalendarizationChange = (event: SelectChangeEvent) => {
         const value = event.target.value;
         const changeFn = () => {
+            let newCalendarizationState = "";
+            let newCustDateId = null;
+
+            if (value === "defaultView") {
+                const findNullDateCustId = calendarizationState.calendarization.find((i) => i.startDate === null && i.endDate === null);
+                newCalendarizationState = "defaultView";
+                newCustDateId = findNullDateCustId?.custDateId;
+            } else if (value === "addCalendarization") {
+                const findNullDateCustId = calendarizationState.calendarization.find((i) => i.startDate === null && i.endDate === null);
+                newCalendarizationState = "addCalendarization";
+                newCustDateId = findNullDateCustId?.custDateId;
+            } else {
+                newCalendarizationState = String(value);
+                newCustDateId = Number(value);
+            }
+
             updateDefaultCapacityFilterState({
-                selectedCalendarization: value,
+                selectedCalendarization: newCalendarizationState,
+                selectedCustDateId: newCustDateId,
             });
             setErrors({ ...errors, startDate: '', endDate: '' });
 
@@ -770,14 +789,19 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                                 <MenuItem value='addCalendarization'>
                                     Add Calendarization
                                 </MenuItem>
-                                {calendarizationState.calendarization.map((cal) => (
-                                    <MenuItem
-                                        key={cal.custDateId}
-                                        value={String(cal.custDateId)}
-                                    >
-                                        {getDateRange(cal.startDate, cal.endDate)}
-                                    </MenuItem>
-                                ))}
+                                {calendarizationState.calendarization.map((cal) => {
+                                    if (cal.startDate && cal.endDate) {
+                                        return (
+                                            <MenuItem
+                                                key={cal.custDateId}
+                                                value={String(cal.custDateId)}
+                                            >
+                                                {getDateRange(cal.startDate, cal.endDate)}
+                                            </MenuItem>
+                                        );
+                                    }
+                                    return null;
+                                })}
                             </Select>
                         </FormControl>
 

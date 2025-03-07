@@ -6,6 +6,7 @@ export interface DefaultCapacityFilterState {
     selectedCalendarization: string;
     startDate: string | null;
     endDate: string | null;
+    selectedCustDateId: number | null;
 };
 
 export interface ServiceTerritory {

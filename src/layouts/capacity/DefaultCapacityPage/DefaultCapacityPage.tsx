@@ -30,7 +30,8 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
         selectedTerritoryId: null,
         selectedCalendarization: "",
         startDate: null,
-        endDate: null
+        endDate: null,
+        selectedCustDateId: null,
     });
 
     // lifting up state for DefaultCapacityTable component
