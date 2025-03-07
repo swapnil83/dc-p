@@ -488,21 +488,30 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                 console.log('checking response: ', response);
 
                 if (response.baseResponse.responseStatus === 'Success') {
-                    const transformedData = transformTableData(response, defaultCapacityTableState.tableData);
 
-                    console.log('checking Transformed Data:', transformedData);
+                    if (
+                        response.capacityAppointmentSlotResponse.baseCapacityHours.length === 0 &&
+                        response.capacityAppointmentSlotResponse.appointmentSlots.length === 0
+                    ) {
+                        // Show the table
+                        setShowDefaultCapacityTable(true);
+                    } else {
+                        const transformedData = transformTableData(response, defaultCapacityTableState.tableData);
 
-                    // Update the table state with the transformed data
-                    updateDefaultCapacityTableState({
-                        status: response.baseResponse.responseStatus,
-                        tableData: transformedData,
-                    });
+                        console.log('checking Transformed Data:', transformedData);
 
-                    // Set the initial data for future comparisons
-                    setInitialData(transformedData);
+                        // Update the table state with the transformed data
+                        updateDefaultCapacityTableState({
+                            status: response.baseResponse.responseStatus,
+                            tableData: transformedData,
+                        });
 
-                    // Show the table
-                    setShowDefaultCapacityTable(true);
+                        // Set the initial data for future comparisons
+                        setInitialData(transformedData);
+
+                        // Show the table
+                        setShowDefaultCapacityTable(true);
+                    }
                 } else {
                     updateDefaultCapacityTableState({
                         status: response.baseResponse.responseStatus,
