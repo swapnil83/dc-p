@@ -8,7 +8,6 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { DefaultCapacityTableState } from './DefaultCapacityTable.types';
 import { DefaultCapacityFilterState, LocationsState } from '../DefaultCapacityFilter/DefaultCapacityFilter.types';
 // import BulkTerritoriesSelection from '../BulkTerritoriesSelection/BulkTerritoriesSelection';
-import Spinner from '../../common/Spinner/Spinner';
 import '../../../index.css';
 import CapacityStream from '../CapacityStreamTable/CapacityStreamTable';
 import AppointmentSlotsTable from '../AppointmentSlotsTable/AppointmentSlotsTable';
@@ -17,6 +16,7 @@ import { RootState } from '../../../redux/store';
 import { transformBaseCapacityHours } from '../../../utility/transformBaseCapacityHours';
 import { transformAppointmentSlots } from '../../../utility/transformAppointmentSlots';
 import { recalculateTerritoryLevel } from '../../../utility/recalculateTerritoryLevel ';
+import axiosInstance from '../../../api/axiosInstance';
 
 type DefaultCapacityTableProps = {
     startDate: string | null;
@@ -50,7 +50,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     console.log('DefaultCapacityTable');
     const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
     const [openResetModal, setOpenResetModal] = useState<boolean>(false);
-    const [openSubmitModal, setOpenSubmitModal] = useState<boolean>(false);
+    // const [openSubmitModal, setOpenSubmitModal] = useState<boolean>(false);
     // const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const [tableDataChanges, setTableDataChanges] = useState<{
@@ -67,6 +67,16 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     }>({
         baseCapacityHours: [],
         appointmentSlots: [],
+    });
+
+    const [responseModal, setResponseModal] = useState<{
+        open: boolean;
+        message: string;
+        territory?: string; // Territory from the response
+    }>({
+        open: false,
+        message: '',
+        territory: undefined,
     });
 
     const { data: capacityStream } = useSelector((state: RootState) => state.capacityStream);
@@ -87,26 +97,58 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
         }
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         // Implement delete logic here (e.g., clear data or call an API)
-        setShowDefaultCapacityTable(false);
-        setOpenDeleteModal(false);
-        const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-        const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
 
-        updateDefaultCapacityTableState({
-            tableData: {
+        const requestBody = {
+            serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
+            customDateId: defaultCapacityFilterState.selectedCustDateId,
+            calendarization: defaultCapacityFilterState.selectedCalendarization,
+            startDate: defaultCapacityFilterState.startDate,
+            endDate: defaultCapacityFilterState.endDate,
+            username: 'swapnil@g.com',
+            bulkTerritories: [],
+            baseCapacityHours: tableDataChanges.baseCapacityHours,
+            appointmentSlots: tableDataChanges.appointmentSlots
+        };
+
+        const data = await axiosInstance.post(
+            'http://localhost:3000/deleteData',
+            requestBody,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }
+        );
+
+        const response: any = data.data;
+
+        if (response.baseResponse.responseStatus === 'Success') {
+            setShowDefaultCapacityTable(false);
+            setOpenDeleteModal(false);
+            const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
+            const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+
+            updateDefaultCapacityTableState({
+                tableData: {
+                    baseCapacityHours: initialBaseCapacityHours,
+                    appointmentSlots: initialAppointmentSlots,
+                }
+            });
+
+            setInitialData({
                 baseCapacityHours: initialBaseCapacityHours,
                 appointmentSlots: initialAppointmentSlots,
-            }
-        });
-
-        setInitialData({
-            baseCapacityHours: initialBaseCapacityHours,
-            appointmentSlots: initialAppointmentSlots,
-        });
-        setIsTableDataEdited(false);
-        console.log('Data deleted');
+            });
+            setIsTableDataEdited(false);
+            console.log('Data deleted');
+        } else {
+            updateDefaultCapacityTableState({
+                status: response.baseResponse.responseStatus,
+                errorMessage: response.baseResponse.message || 'An Unknown error message',
+            });
+        }
     };
 
     const handleCancelDelete = () => {
@@ -143,21 +185,68 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     //     setSidebarOpen(false);
     // };
 
-    const handleSubmitClick = () => {
-        // Perform submit logic here
+    const handleSubmitClick = async () => {
         console.log('checking submit data: ', tableDataChanges);
-        setInitialData({
-            baseCapacityHours: defaultCapacityTableState.tableData.baseCapacityHours,
-            appointmentSlots: defaultCapacityTableState.tableData.appointmentSlots,
-        });
-        setTableDataChanges({ baseCapacityHours: [], appointmentSlots: [] });
-        setIsTableDataEdited(false);
-        setOpenSubmitModal(true);
+        const requestBody = {
+            serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
+            customDateId: defaultCapacityFilterState.selectedCustDateId,
+            calendarization: defaultCapacityFilterState.selectedCalendarization,
+            startDate: defaultCapacityFilterState.startDate,
+            endDate: defaultCapacityFilterState.endDate,
+            username: 'swapnil@g.com',
+            bulkTerritories: [],
+            baseCapacityHours: tableDataChanges.baseCapacityHours,
+            appointmentSlots: tableDataChanges.appointmentSlots,
+        };
+
+        try {
+            const data = await axiosInstance.post(
+                'http://localhost:3000/updateServiceTerritoryCapacityHours',
+                requestBody,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            const response: any = data.data;
+            console.log('SUBMITTED: ', response)
+
+            if (response.baseResponse.responseStatus === 'Success') {
+                setInitialData({
+                    baseCapacityHours: defaultCapacityTableState.tableData.baseCapacityHours,
+                    appointmentSlots: defaultCapacityTableState.tableData.appointmentSlots,
+                });
+                setTableDataChanges({ baseCapacityHours: [], appointmentSlots: [] });
+                setIsTableDataEdited(false);
+
+                const serviceTerritoryName = response.defaultCapcaityViewResponses[0]?.serviceTerritory || 'Unknown Territory';
+
+                // Show success modal with territory
+                setResponseModal({
+                    open: true,
+                    message: 'Your changes have been successfully submitted.',
+                    territory: serviceTerritoryName, // Assuming the response contains the territory
+                });
+            } else {
+                // Show error modal
+                setResponseModal({
+                    open: true,
+                    message: response.baseResponse.message || 'An unknown error occurred.',
+                });
+            }
+        } catch (error) {
+            // Show error modal
+            setResponseModal({
+                open: true,
+                message: 'Failed to submit changes. Please try again later.',
+            });
+        }
     };
 
     return (
         <>
-            {defaultCapacityTableState.isLoading && <Spinner />}
             <Box>
                 {(defaultCapacityTableState.status === 'failure') && (
                     <Box
@@ -383,7 +472,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 </Modal>
 
                 {/* Submit Success Modal */}
-                <Modal open={openSubmitModal} onClose={() => setOpenSubmitModal(false)}>
+                <Modal open={responseModal.open} onClose={() => setResponseModal({ open: false, message: '' })}>
                     <Box
                         sx={{
                             position: 'absolute',
@@ -399,14 +488,20 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                         }}
                     >
                         <Typography variant="h6" component="h2">
-                            Submission Successful
+                            {responseModal.message.includes('success') ? 'Success' : 'Error'}
                         </Typography>
                         <Typography sx={{ mt: 2 }}>
-                            Your changes have been successfully submitted.
+                            {responseModal.message}
+                            {responseModal.territory && (
+                                <>
+                                    <br />
+                                    <strong>Territory:</strong> {responseModal.territory}
+                                </>
+                            )}
                         </Typography>
                         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                             <Button
-                                onClick={() => setOpenSubmitModal(false)}
+                                onClick={() => setResponseModal({ open: false, message: '' })}
                                 variant="contained"
                                 sx={{ backgroundColor: '#ffcc00', color: '#000000', fontWeight: 'bold' }}
                             >

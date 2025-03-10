@@ -82,6 +82,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
     const [pendingMarketChange, setPendingMarketChange] = useState<(() => void) | null>(null);
     const [pendingTerritoryChange, setPendingTerritoryChange] = useState<(() => void) | null>(null);
     const [pendingCalendarizationChange, setPendingCalendarizationChange] = useState<(() => void) | null>(null);
+    const [pendingStartDateChange, setPendingStartDateChange] = useState<(() => void) | null>(null);
+    const [pendingEndDateChange, setPendingEndDateChange] = useState<(() => void) | null>(null);
 
     // updater function for calendarization state
     const updateCalendarization = (newState: Partial<CalendarizationState>) => {
@@ -417,22 +419,80 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
 
     const handleStartDateChange = (newValue: Date | null) => {
         const formattedDate = formatDateToMMDDYYYY(newValue);
-        updateDefaultCapacityFilterState({
-            startDate: formattedDate,
-        });
-        setErrors({ ...errors, startDate: '' });
+
+        const changeFn = () => {
+            updateDefaultCapacityFilterState({
+                startDate: formattedDate,
+            });
+            setErrors({ ...errors, startDate: '' });
+
+            if (showDefaultCapacityTable) {
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+
+                updateDefaultCapacityTableState({
+                    tableData: {
+                        baseCapacityHours: initialBaseCapacityHours,
+                        appointmentSlots: initialAppointmentSlots,
+                    }
+                });
+
+                setInitialData({
+                    baseCapacityHours: initialBaseCapacityHours,
+                    appointmentSlots: initialAppointmentSlots,
+                });
+
+                setShowDefaultCapacityTable(false);
+            }
+        };
+
+        if (isTableDataEdited && showDefaultCapacityTable) {
+            setPendingStartDateChange(() => changeFn);
+            setOpenCalendarizationChangeModal(true);
+        } else {
+            changeFn();
+        }
     };
 
     const handleEndDateChange = (newValue: Date | null) => {
         const formattedDate = formatDateToMMDDYYYY(newValue);
-        updateDefaultCapacityFilterState({ endDate: formattedDate });
-        setErrors({ ...errors, endDate: "" });
 
-        if (defaultCapacityFilterState.selectedCalendarization === "addCalendarization" && formattedDate) {
-            const hasConflict = checkDateConflict(defaultCapacityFilterState.startDate, formattedDate);
-            if (hasConflict) {
-                setOpenConflictModal(true); // Show modal if conflict detected
+        const changeFn = () => {
+            updateDefaultCapacityFilterState({ endDate: formattedDate });
+            setErrors({ ...errors, endDate: "" });
+
+            if (defaultCapacityFilterState.selectedCalendarization === "addCalendarization" && formattedDate) {
+                const hasConflict = checkDateConflict(defaultCapacityFilterState.startDate, formattedDate);
+                if (hasConflict) {
+                    setOpenConflictModal(true);
+                }
             }
+
+            if (showDefaultCapacityTable) {
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+
+                updateDefaultCapacityTableState({
+                    tableData: {
+                        baseCapacityHours: initialBaseCapacityHours,
+                        appointmentSlots: initialAppointmentSlots,
+                    }
+                });
+
+                setInitialData({
+                    baseCapacityHours: initialBaseCapacityHours,
+                    appointmentSlots: initialAppointmentSlots,
+                });
+
+                setShowDefaultCapacityTable(false);
+            }
+        };
+
+        if (isTableDataEdited && showDefaultCapacityTable) {
+            setPendingEndDateChange(() => changeFn);
+            setOpenCalendarizationChangeModal(true);
+        } else {
+            changeFn();
         }
     };
 
@@ -545,6 +605,10 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             pendingMarketChange();
         } else if (pendingTerritoryChange) {
             pendingTerritoryChange();
+        } else if (pendingStartDateChange) {
+            pendingStartDateChange();
+        } else if (pendingEndDateChange) {
+            pendingEndDateChange();
         }
 
         setOpenCalendarizationChangeModal(false);
@@ -552,6 +616,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
         setPendingStateChange(null);
         setPendingMarketChange(null);
         setPendingTerritoryChange(null);
+        setPendingStartDateChange(null);
+        setPendingEndDateChange(null);
     };
 
     const handleCancelCalendarizationChange = () => {

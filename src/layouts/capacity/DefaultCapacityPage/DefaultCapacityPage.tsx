@@ -12,6 +12,7 @@ import DefaultCapacityTable from '../../../components/capacity/DefaultCapacityTa
 import { DefaultCapacityTableState } from '../../../components/capacity/DefaultCapacityTable/DefaultCapacityTable.types';
 import { transformBaseCapacityHours } from '../../../utility/transformBaseCapacityHours';
 import { transformAppointmentSlots } from '../../../utility/transformAppointmentSlots';
+import Spinner from '../../../components/common/Spinner/Spinner';
 
 type DefaultCapacityPageProps = {};
 
@@ -158,23 +159,26 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
                     setInitialData={setInitialData}
                     defaultCapacityTableState={defaultCapacityTableState}
                 />
-                {
-                    showDefaultCapacityTable &&
-                    <DefaultCapacityTable
-                        startDate={defaultCapacityFilterState.startDate}
-                        endDate={defaultCapacityFilterState.endDate}
-                        selectedCalendarization={defaultCapacityFilterState.selectedCalendarization}
-                        defaultCapacityTableState={defaultCapacityTableState}
-                        updateDefaultCapacityTableState={updateDefaultCapacityTableState}
-                        setShowDefaultCapacityTable={setShowDefaultCapacityTable}
-                        isTableDataEdited={isTableDataEdited}
-                        setIsTableDataEdited={setIsTableDataEdited}
-                        locationsState={locationsState}
-                        defaultCapacityFilterState={defaultCapacityFilterState}
-                        initialData={initialData}
-                        setInitialData={setInitialData}
-                    />
-                }
+                <>
+                    {defaultCapacityTableState.isLoading && <Spinner />}
+                    {
+                        showDefaultCapacityTable &&
+                        <DefaultCapacityTable
+                            startDate={defaultCapacityFilterState.startDate}
+                            endDate={defaultCapacityFilterState.endDate}
+                            selectedCalendarization={defaultCapacityFilterState.selectedCalendarization}
+                            defaultCapacityTableState={defaultCapacityTableState}
+                            updateDefaultCapacityTableState={updateDefaultCapacityTableState}
+                            setShowDefaultCapacityTable={setShowDefaultCapacityTable}
+                            isTableDataEdited={isTableDataEdited}
+                            setIsTableDataEdited={setIsTableDataEdited}
+                            locationsState={locationsState}
+                            defaultCapacityFilterState={defaultCapacityFilterState}
+                            initialData={initialData}
+                            setInitialData={setInitialData}
+                        />
+                    }
+                </>
             </Box>
         </Box>
     );
