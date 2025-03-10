@@ -1,3 +1,5 @@
+import { recalculateTerritoryLevel } from "./recalculateTerritoryLevel ";
+
 export const transformTableData = (response: any, existingData: any) => {
     const { baseCapacityHours: apiBaseCapacityHours, appointmentSlots: apiAppointmentSlots } = response.capacityAppointmentSlotResponse;
 
@@ -42,8 +44,17 @@ export const transformTableData = (response: any, existingData: any) => {
         return existingItem; // If no match, return the existing item as is
     });
 
-    return {
+    // Recalculate territory level data
+    const transformedData = {
         baseCapacityHours: mergedBaseCapacityHours,
         appointmentSlots: mergedAppointmentSlots,
+    };
+
+    // Recalculate territory level data
+    const recalculatedData = recalculateTerritoryLevel(transformedData.baseCapacityHours);
+
+    return {
+        baseCapacityHours: recalculatedData,
+        appointmentSlots: transformedData.appointmentSlots,
     };
 };
