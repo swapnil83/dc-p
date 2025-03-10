@@ -21,7 +21,6 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
     const dispatch: AppDispatch = useDispatch();
     const { data: capacityStream, status: capacityStreamStatus } = useSelector((state: RootState) => state.capacityStream);
     const { data: appointmentSlots, status: appointmentSlotsStatus } = useSelector((state: RootState) => state.appointmentSlots);
-    console.log('DefaultCapacityPage checking: ', capacityStream, appointmentSlots);
 
     // lifting up state for DefaultCapacityFilter component
     const [defaultCapacityFilterState, setDefaultCapacityFilterState] = useState<DefaultCapacityFilterState>({

@@ -545,7 +545,6 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                 });
 
                 const response: DefaultCapacityTableApiResponseData = data.data;
-                console.log('checking response: ', response);
 
                 if (response.baseResponse.responseStatus === 'Success') {
 
@@ -557,8 +556,6 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                         setShowDefaultCapacityTable(true);
                     } else {
                         const transformedData = transformTableData(response, defaultCapacityTableState.tableData);
-
-                        console.log('checking Transformed Data:', transformedData);
 
                         // Update the table state with the transformed data
                         updateDefaultCapacityTableState({

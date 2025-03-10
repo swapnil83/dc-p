@@ -79,6 +79,16 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
         territory: undefined,
     });
 
+    const [deleteResponseModal, setDeleteResponseModal] = useState<{
+        open: boolean;
+        message: string;
+        territory?: string;
+    }>({
+        open: false,
+        message: '',
+        territory: undefined,
+    });
+
     const { data: capacityStream } = useSelector((state: RootState) => state.capacityStream);
     const { data: appointmentSlots } = useSelector((state: RootState) => state.appointmentSlots);
 
@@ -94,60 +104,6 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     const handleDeleteClick = () => {
         if (!deleteIconDisabled) {
             setOpenDeleteModal(true); // Show delete confirmation modal
-        }
-    };
-
-    const handleConfirmDelete = async () => {
-        // Implement delete logic here (e.g., clear data or call an API)
-
-        const requestBody = {
-            serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
-            customDateId: defaultCapacityFilterState.selectedCustDateId,
-            calendarization: defaultCapacityFilterState.selectedCalendarization,
-            startDate: defaultCapacityFilterState.startDate,
-            endDate: defaultCapacityFilterState.endDate,
-            username: 'swapnil@g.com',
-            bulkTerritories: [],
-            baseCapacityHours: tableDataChanges.baseCapacityHours,
-            appointmentSlots: tableDataChanges.appointmentSlots
-        };
-
-        const data = await axiosInstance.post(
-            'http://localhost:3000/deleteData',
-            requestBody,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }
-        );
-
-        const response: any = data.data;
-
-        if (response.baseResponse.responseStatus === 'Success') {
-            setShowDefaultCapacityTable(false);
-            setOpenDeleteModal(false);
-            const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-            const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
-
-            updateDefaultCapacityTableState({
-                tableData: {
-                    baseCapacityHours: initialBaseCapacityHours,
-                    appointmentSlots: initialAppointmentSlots,
-                }
-            });
-
-            setInitialData({
-                baseCapacityHours: initialBaseCapacityHours,
-                appointmentSlots: initialAppointmentSlots,
-            });
-            setIsTableDataEdited(false);
-            console.log('Data deleted');
-        } else {
-            updateDefaultCapacityTableState({
-                status: response.baseResponse.responseStatus,
-                errorMessage: response.baseResponse.message || 'An Unknown error message',
-            });
         }
     };
 
@@ -186,7 +142,6 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     // };
 
     const handleSubmitClick = async () => {
-        console.log('checking submit data: ', tableDataChanges);
         const requestBody = {
             serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
             customDateId: defaultCapacityFilterState.selectedCustDateId,
@@ -211,7 +166,6 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
             );
 
             const response: any = data.data;
-            console.log('SUBMITTED: ', response)
 
             if (response.baseResponse.responseStatus === 'Success') {
                 setInitialData({
@@ -239,6 +193,58 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
         } catch (error) {
             // Show error modal
             setResponseModal({
+                open: true,
+                message: 'Failed to submit changes. Please try again later.',
+            });
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        try {
+            const data = await axiosInstance.delete(
+                `http://localhost:3000/deleteCapacityData?custDateId=${defaultCapacityFilterState.selectedCustDateId}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            const response: any = data.data;
+
+            if (response.baseResponse.responseStatus === 'Success') {
+                const territoryName = defaultCapacityFilterState.selectedTerritory;
+                setDeleteResponseModal({
+                    open: true,
+                    message: response.baseResponse.message,
+                    territory: territoryName,
+                });
+
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+
+                updateDefaultCapacityTableState({
+                    tableData: {
+                        baseCapacityHours: initialBaseCapacityHours,
+                        appointmentSlots: initialAppointmentSlots,
+                    }
+                });
+
+                setInitialData({
+                    baseCapacityHours: initialBaseCapacityHours,
+                    appointmentSlots: initialAppointmentSlots,
+                });
+
+                setIsTableDataEdited(false);
+                setOpenDeleteModal(false);
+            } else {
+                setDeleteResponseModal({
+                    open: true,
+                    message: response.baseResponse.message || 'An unknown error occurred.',
+                });
+            }
+        } catch (error) {
+            setDeleteResponseModal({
                 open: true,
                 message: 'Failed to submit changes. Please try again later.',
             });
@@ -502,6 +508,49 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                             <Button
                                 onClick={() => setResponseModal({ open: false, message: '' })}
+                                variant="contained"
+                                sx={{ backgroundColor: '#ffcc00', color: '#000000', fontWeight: 'bold' }}
+                            >
+                                Close
+                            </Button>
+                        </Box>
+                    </Box>
+                </Modal>
+
+                {/* Delete Success/Error Modal */}
+                <Modal open={deleteResponseModal.open} onClose={() => setDeleteResponseModal({ open: false, message: '' })}>
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: 400,
+                            bgcolor: 'background.paper',
+                            border: '2px solid #000',
+                            boxShadow: 24,
+                            borderRadius: '20px',
+                            p: 4,
+                        }}
+                    >
+                        <Typography variant="h6" component="h2">
+                            {deleteResponseModal.message.includes('record deleted successfully') ? 'Success' : 'Error'}
+                        </Typography>
+                        <Typography sx={{ mt: 2 }}>
+                            {deleteResponseModal.message}
+                            {deleteResponseModal.territory && (
+                                <>
+                                    <br />
+                                    <strong>Territory:</strong> {deleteResponseModal.territory}
+                                </>
+                            )}
+                        </Typography>
+                        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                            <Button
+                                onClick={() => {
+                                    setDeleteResponseModal({ open: false, message: '' });
+                                    setShowDefaultCapacityTable(false);
+                                }}
                                 variant="contained"
                                 sx={{ backgroundColor: '#ffcc00', color: '#000000', fontWeight: 'bold' }}
                             >
