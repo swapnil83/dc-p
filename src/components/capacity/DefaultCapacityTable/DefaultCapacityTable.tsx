@@ -31,6 +31,7 @@ type DefaultCapacityTableProps = {
     defaultCapacityFilterState: DefaultCapacityFilterState;
     initialData: DefaultCapacityTableState["tableData"];
     setInitialData: React.Dispatch<React.SetStateAction<DefaultCapacityTableState["tableData"]>>;
+    onCalendarizationUpdate: (preserveSelectedCalendarization: boolean) => void;
 };
 
 const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
@@ -45,7 +46,8 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     // locationsState,
     defaultCapacityFilterState,
     initialData,
-    setInitialData
+    setInitialData,
+    onCalendarizationUpdate,
 }) => {
     console.log('DefaultCapacityTable');
     const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
@@ -183,6 +185,11 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                     message: 'Your changes have been successfully submitted.',
                     territory: serviceTerritoryName, // Assuming the response contains the territory
                 });
+
+                // Call the callback to re-fetch calendarization data
+                if (onCalendarizationUpdate) {
+                    onCalendarizationUpdate(true); // Pass `true` to preserve the selected calendarization
+                }
             } else {
                 // Show error modal
                 setResponseModal({

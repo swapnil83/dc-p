@@ -18,8 +18,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { useSelector } from 'react-redux';
 
-import { CalendarizationState, LocationsState, LocationsApiResponseData, CalendarizationApiResponseData, DefaultCapacityFilterState } from "./DefaultCapacityFilter.types";
-import { getDateRange, formatDateToMMDDYYYY, formatDate } from "../../../utility/dateUtility";
+import { CalendarizationState, LocationsState, LocationsApiResponseData, DefaultCapacityFilterState } from "./DefaultCapacityFilter.types";
+import { getDateRange, formatDateToMMDDYYYY } from "../../../utility/dateUtility";
 import { getTerritoryId } from "../../../utility/getTerritoryId";
 import axiosInstance from "../../../api/axiosInstance";
 import Spinner from "../../common/Spinner/Spinner";
@@ -42,6 +42,8 @@ type DefaultCapacityFilterProps = {
     updateDefaultCapacityTableState: (newState: Partial<DefaultCapacityTableState>) => void;
     setInitialData: React.Dispatch<React.SetStateAction<DefaultCapacityTableState["tableData"]>>;
     defaultCapacityTableState: DefaultCapacityTableState,
+    calendarizationState: CalendarizationState;
+    fetchCalendarizationData: (territoryId: number | null) => void;
 };
 
 const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
@@ -57,17 +59,11 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
     updateDefaultCapacityTableState,
     setInitialData,
     defaultCapacityTableState,
+    calendarizationState,
+    fetchCalendarizationData
 }) => {
     const { data: capacityStream } = useSelector((state: RootState) => state.capacityStream);
     const { data: appointmentSlots } = useSelector((state: RootState) => state.appointmentSlots);
-
-    // state for Calendarization dropdown data
-    const [calendarizationState, setCalendarizationState] = useState<CalendarizationState>({
-        status: 'idle',
-        calendarization: [],
-        errorMessage: "",
-        isLoading: false,
-    });
 
     // state for fields error
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -84,14 +80,6 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
     const [pendingCalendarizationChange, setPendingCalendarizationChange] = useState<(() => void) | null>(null);
     const [pendingStartDateChange, setPendingStartDateChange] = useState<(() => void) | null>(null);
     const [pendingEndDateChange, setPendingEndDateChange] = useState<(() => void) | null>(null);
-
-    // updater function for calendarization state
-    const updateCalendarization = (newState: Partial<CalendarizationState>) => {
-        setCalendarizationState((prevState) => ({
-            ...prevState,
-            ...newState
-        }));
-    };
 
     // on page mounting fetch locations for State, Market abd Service Territory fields
     useEffect(() => {
@@ -135,54 +123,6 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
         fetchLocations();
     }, []);
 
-    // fetch calendarization data for selected State, Market and Service Territory
-    const fetchCalendarizationData = async (territoryId: number | null) => {
-        updateCalendarization({
-            isLoading: true,
-        });
-
-        try {
-            const data = await axiosInstance.get(`http://localhost:3000/getCalendarizedDateRangeForTerritory?serviceTerritoryId=${territoryId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            const response: CalendarizationApiResponseData = data.data;
-
-            if (response.baseResponse.responseStatus === 'Success') {
-                updateCalendarization({
-                    status: response.baseResponse.responseStatus,
-                    calendarization: response.dateRangeList.map((item: any) => ({
-                        ...item,
-                        startDate: item.startDate ? formatDate(item.startDate) : null,
-                        endDate: item.endDate ? formatDate(item.endDate) : null,
-                    }))
-                });
-                const findNullDateCustId = response.dateRangeList.find((i) => (i.startDate === null && i.endDate === null));
-                updateDefaultCapacityFilterState({
-                    selectedCalendarization: "defaultView",
-                    selectedCustDateId: findNullDateCustId?.custDateId,
-                });
-                setCalendarizationFieldVisibility(true);
-            } else {
-                updateCalendarization({
-                    status: response.baseResponse.responseStatus,
-                    errorMessage: response.baseResponse.message || 'An Unknown error message',
-                });
-            }
-        } catch (error) {
-            updateCalendarization({
-                status: 'failure',
-                errorMessage: 'Failed to fetch data. Please try again later.',
-            });
-        } finally {
-            updateCalendarization({
-                isLoading: false
-            });
-        }
-    };
-
     // check if the selected date range overlaps with existing ranges
     const checkDateConflict = (startDate: string | null, endDate: string | null) => {
         if (!startDate || !endDate) return false;
@@ -216,6 +156,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                 selectedMarket: "",
                 selectedTerritory: "",
                 selectedTerritoryId: null,
+                startDate: null,
+                endDate: null,
             });
 
             if (calendarizationFieldVisibility) {
@@ -258,6 +200,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                 selectedMarket: event.target.value,
                 selectedTerritory: "",
                 selectedTerritoryId: null,
+                startDate: null,
+                endDate: null,
             });
 
             if (calendarizationFieldVisibility) {
@@ -302,6 +246,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             updateDefaultCapacityFilterState({
                 selectedTerritory: event.target.value,
                 selectedTerritoryId: territoryId,
+                startDate: null,
+                endDate: null,
             });
             setErrors({ ...errors, territory: '' });
 

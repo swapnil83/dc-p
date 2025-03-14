@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Box } from '@mui/material';
 ``
 import PageTitle from '../../../components/common/PageTitle/PageTitle';
-import { DefaultCapacityFilterState, LocationsState } from '../../../components/capacity/DefaultCapacityFilter/DefaultCapacityFilter.types';
+import { CalendarizationApiResponseData, CalendarizationState, DefaultCapacityFilterState, LocationsState } from '../../../components/capacity/DefaultCapacityFilter/DefaultCapacityFilter.types';
 import DefaultCapacityFilter from '../../../components/capacity/DefaultCapacityFilter/DefaultCapacityFilter';
 import { AppDispatch, RootState } from '../../../redux/store';
 import { fetchCapacityStream } from '../../../redux/slices/capacityStreamSlice';
@@ -13,6 +13,8 @@ import { DefaultCapacityTableState } from '../../../components/capacity/DefaultC
 import { transformBaseCapacityHours } from '../../../utility/transformBaseCapacityHours';
 import { transformAppointmentSlots } from '../../../utility/transformAppointmentSlots';
 import Spinner from '../../../components/common/Spinner/Spinner';
+import axiosInstance from '../../../api/axiosInstance';
+import { formatDate } from '../../../utility/dateUtility';
 
 type DefaultCapacityPageProps = {};
 
@@ -51,6 +53,14 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
         states: [],
         errorMessage: "",
         isLoading: false
+    });
+
+    // state for Calendarization dropdown data
+    const [calendarizationState, setCalendarizationState] = useState<CalendarizationState>({
+        status: 'idle',
+        calendarization: [],
+        errorMessage: "",
+        isLoading: false,
     });
 
     // state to show DefaultCapacityTable component
@@ -140,6 +150,74 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
         }));
     };
 
+    // updater function for calendarization state
+    const updateCalendarization = (newState: Partial<CalendarizationState>) => {
+        setCalendarizationState((prevState) => ({
+            ...prevState,
+            ...newState
+        }));
+    };
+
+    // fetch calendarization data for selected State, Market and Service Territory
+    const fetchCalendarizationData = async (territoryId: number | null, preserveSelectedCalendarization = false) => {
+        const selectedCalendarization = defaultCapacityFilterState.selectedCalendarization;
+
+        updateCalendarization({
+            isLoading: true,
+        });
+
+        try {
+            const data = await axiosInstance.get(`http://localhost:3000/getCalendarizedDateRangeForTerritory?serviceTerritoryId=${territoryId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const response: CalendarizationApiResponseData = data.data;
+
+            if (response.baseResponse.responseStatus === 'Success') {
+                updateCalendarization({
+                    status: response.baseResponse.responseStatus,
+                    calendarization: response.dateRangeList.map((item: any) => ({
+                        ...item,
+                        startDate: item.startDate ? formatDate(item.startDate) : null,
+                        endDate: item.endDate ? formatDate(item.endDate) : null,
+                    }))
+                });
+                const findNullDateCustId = response.dateRangeList.find((i) => (i.startDate === null && i.endDate === null));
+
+                // Restore the selected calendarization option if needed
+                if (preserveSelectedCalendarization) {
+                    updateDefaultCapacityFilterState({
+                        selectedCalendarization: selectedCalendarization, // Restore the selected option
+                        selectedCustDateId: findNullDateCustId?.custDateId,
+                    });
+                } else {
+                    updateDefaultCapacityFilterState({
+                        selectedCalendarization: "defaultView",
+                        selectedCustDateId: findNullDateCustId?.custDateId,
+                    });
+                }
+
+                setCalendarizationFieldVisibility(true);
+            } else {
+                updateCalendarization({
+                    status: response.baseResponse.responseStatus,
+                    errorMessage: response.baseResponse.message || 'An Unknown error message',
+                });
+            }
+        } catch (error) {
+            updateCalendarization({
+                status: 'failure',
+                errorMessage: 'Failed to fetch data. Please try again later.',
+            });
+        } finally {
+            updateCalendarization({
+                isLoading: false
+            });
+        }
+    };
+
     return (
         <Box display={'flex'} flexDirection={'column'} gap={5}>
             <PageTitle title='Default Capacity' backgroundColor='#ffcc00' />
@@ -157,6 +235,8 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
                     updateDefaultCapacityTableState={updateDefaultCapacityTableState}
                     setInitialData={setInitialData}
                     defaultCapacityTableState={defaultCapacityTableState}
+                    calendarizationState={calendarizationState}
+                    fetchCalendarizationData={fetchCalendarizationData}
                 />
                 <>
                     {defaultCapacityTableState.isLoading && <Spinner />}
@@ -175,6 +255,9 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
                             defaultCapacityFilterState={defaultCapacityFilterState}
                             initialData={initialData}
                             setInitialData={setInitialData}
+                            onCalendarizationUpdate={(preserveSelectedCalendarization) =>
+                                fetchCalendarizationData(defaultCapacityFilterState.selectedTerritoryId, preserveSelectedCalendarization)
+                            }
                         />
                     }
                 </>
