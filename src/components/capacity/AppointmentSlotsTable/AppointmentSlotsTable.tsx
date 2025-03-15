@@ -58,31 +58,6 @@ const AppointmentSlotsTable: React.FC<AppointmentSlotsTableProps> = ({ appointme
         ? getDaysInRange(new Date(startDate), new Date(endDate))
         : daysOfWeek;
 
-    // const handleCellValueChange = (rowIndex: number, columnId: string, value: boolean) => {
-    //     const newData = [...appointmentFreezeData];
-    //     const currentRow = newData[rowIndex];
-
-    //     // Safely access `days` and provide a fallback if it's undefined
-    //     const currentDays = currentRow.days || {};
-
-    //     newData[rowIndex] = {
-    //         ...currentRow,
-    //         days: {
-    //             ...Object.fromEntries(
-    //                 daysOfWeek.map(day => [day, currentDays[day as keyof typeof currentDays] ?? false])
-    //             ) as Record<string, boolean>,
-    //             [columnId]: value,
-    //         },
-    //     };
-
-    //     updateDefaultCapacityTableState({
-    //         tableData: {
-    //             baseCapacityHours: defaultCapacityTableState.tableData.baseCapacityHours,
-    //             appointmentSlots: newData
-    //         }
-    //     });
-    // };
-
     const handleCellValueChange = (rowIndex: number, columnId: string, value: boolean) => {
         const newData = [...appointmentFreezeData];
         const currentRow = newData[rowIndex];

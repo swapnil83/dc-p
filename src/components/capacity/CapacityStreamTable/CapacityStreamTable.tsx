@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MaterialReactTable, MRT_Cell, MRT_ColumnDef } from 'material-react-table';
 import { DefaultCapacityTableState, CapacityStreamRowData } from '../DefaultCapacityTable/DefaultCapacityTable.types';
 import { Typography } from '@mui/material';
@@ -54,41 +54,6 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
     };
 
     const enabledDays: string[] = startDate && endDate ? getDaysInRange(new Date(startDate), new Date(endDate)) : daysOfWeek;
-
-    // const handleCellValueChange = (rowIndex: number, columnId: string, value: string) => {
-    //     const newData = [...capacitySlotsData];
-    //     const numericValue = parseFloat(value);
-
-    //     if (!isNaN(numericValue)) {
-    //         const roundedValue = Math.round(numericValue * 100) / 100;
-    //         newData[rowIndex] = {
-    //             ...newData[rowIndex],
-    //             days: { ...newData[rowIndex].days, [columnId]: roundedValue },
-    //         };
-
-    //         // Update the "Territory Level" row sum for the edited column
-    //         if (columnId !== 'capacityStream') {
-    //             const territoryRow = newData.find((row) => row.capacityStream === "Territory Level");
-    //             if (territoryRow) {
-    //                 const sum = newData
-    //                     .filter((row) => !row.isDisabled)
-    //                     .reduce((acc, row) => {
-    //                         const value = row.days?.[columnId as keyof typeof row.days] || 0;
-    //                         return acc + value;
-    //                     }, 0);
-    //                 const roundedValue = Math.round(sum * 100) / 100;
-    //                 territoryRow.days[columnId as keyof typeof territoryRow.days] = roundedValue;
-    //             }
-    //         }
-
-    //         updateDefaultCapacityTableState({
-    //             tableData: {
-    //                 baseCapacityHours: newData,
-    //                 appointmentSlots: defaultCapacityTableState.tableData.appointmentSlots
-    //             }
-    //         });
-    //     }
-    // };
 
     const handleCellValueChange = (rowIndex: number, columnId: string, value: string) => {
         const newData = [...capacitySlotsData];
@@ -218,32 +183,39 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
                     </div>
                 );
             },
-            muiEditTextFieldProps: ({ cell }: { cell: MRT_Cell<CapacityStreamRowData> }) => ({
-                type: 'text',
-                inputProps: {
-                    min: 0,
-                    style: { padding: '8px 16px' },
+            muiEditTextFieldProps: ({ cell }: { cell: MRT_Cell<CapacityStreamRowData> }) => {
+                const [value, setValue] = useState<string>(String(cell.row.original.days[day as keyof typeof cell.row.original.days]));
+
+                return {
+                    type: 'text',
+                    value: value,
+                    inputProps: {
+                        min: 0,
+                        style: { padding: '8px 16px' },
+                    },
                     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                        const isValid = validateInput(e.target.value);
+                        const newValue = e.target.value;
+                        setValue(newValue);
+                        const isValid = validateInput(newValue);
                         e.target.style.border = isValid ? '1px solid #ccc' : '2px solid red';
                         e.target.style.fontWeight = isValid ? 'normal' : 'bold';
                         e.target.style.color = isValid ? 'black' : 'red';
+                    },
+                    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+                        handleBlur(e, cell, day);
+                    },
+                    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === 'Enter') {
+                            handleCellValueChange(cell.row.index, day, e.currentTarget.value);
+                        }
+                    },
+                    sx: {
+                        '& .MuiInputBase-root': {
+                            padding: '0 !important',
+                        }
                     }
-                },
-                onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-                    handleBlur(e, cell, day);
-                },
-                onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === 'Enter') {
-                        handleCellValueChange(cell.row.index, day, e.currentTarget.value);
-                    }
-                },
-                sx: {
-                    '& .MuiInputBase-root': {
-                        padding: '0 !important',
-                    }
-                }
-            }),
+                };
+            },
         })),
     ];
 

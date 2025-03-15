@@ -3,7 +3,7 @@ import { CapacityStreamRowData } from "../components/capacity/DefaultCapacityTab
 
 export const transformBaseCapacityHours = (capacityStreams: CapacityStream[]): CapacityStreamRowData[] => {
     const territoryLevelAggregate: CapacityStreamRowData = {
-        csId: 1,
+        csId: 0,
         capacityStream: "Territory Level",
         days: { MONDAY: 0, TUESDAY: 0, WEDNESDAY: 0, THURSDAY: 0, FRIDAY: 0, SATURDAY: 0, SUNDAY: 0 },
         isDisabled: true,

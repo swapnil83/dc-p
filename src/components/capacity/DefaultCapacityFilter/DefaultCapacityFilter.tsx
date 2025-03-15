@@ -501,7 +501,12 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                         // Show the table
                         setShowDefaultCapacityTable(true);
                     } else {
-                        const transformedData = transformTableData(response, defaultCapacityTableState.tableData);
+                        const transformedData = transformTableData(
+                            response,
+                            defaultCapacityTableState.tableData,
+                            appointmentSlots.serviceTerritories,
+                            defaultCapacityFilterState.selectedTerritory,
+                        );
 
                         // Update the table state with the transformed data
                         updateDefaultCapacityTableState({

@@ -9,7 +9,7 @@ import { DefaultCapacityTableState } from './DefaultCapacityTable.types';
 import { DefaultCapacityFilterState, LocationsState } from '../DefaultCapacityFilter/DefaultCapacityFilter.types';
 // import BulkTerritoriesSelection from '../BulkTerritoriesSelection/BulkTerritoriesSelection';
 import '../../../index.css';
-import CapacityStream from '../CapacityStreamTable/CapacityStreamTable';
+import CapacityStreamTable from '../CapacityStreamTable/CapacityStreamTable';
 import AppointmentSlotsTable from '../AppointmentSlotsTable/AppointmentSlotsTable';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -94,7 +94,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     const { data: capacityStream } = useSelector((state: RootState) => state.capacityStream);
     const { data: appointmentSlots } = useSelector((state: RootState) => state.appointmentSlots);
 
-    const deleteIconDisabled = selectedCalendarization === "defaultView" || selectedCalendarization === "addCalendarization";
+    const deleteIconDisabled = selectedCalendarization === "addCalendarization";
 
     // monitor changes to table data to enable/disable Reset button
     useEffect(() => {
@@ -144,17 +144,46 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     // };
 
     const handleSubmitClick = async () => {
-        const requestBody = {
-            serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
-            customDateId: defaultCapacityFilterState.selectedCustDateId,
-            calendarization: defaultCapacityFilterState.selectedCalendarization,
-            startDate: defaultCapacityFilterState.startDate,
-            endDate: defaultCapacityFilterState.endDate,
-            username: 'swapnil@g.com',
-            bulkTerritories: [],
-            baseCapacityHours: tableDataChanges.baseCapacityHours,
-            appointmentSlots: tableDataChanges.appointmentSlots,
-        };
+        let requestBody;
+
+        if (defaultCapacityFilterState.selectedCalendarization === "defaultView" || defaultCapacityFilterState.selectedCalendarization === "addCalendarization") {
+
+            const filteredBaseCapacityHours = defaultCapacityTableState.tableData.baseCapacityHours.filter(
+                row => row.capacityStream !== "Territory Level"
+            );
+
+            requestBody = {
+                serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
+                customDateId: defaultCapacityFilterState.selectedCustDateId,
+                calendarization: defaultCapacityFilterState.selectedCalendarization,
+                startDate: defaultCapacityFilterState.startDate,
+                endDate: defaultCapacityFilterState.endDate,
+                username: 'swapnil@g.com',
+                bulkTerritories: [],
+                baseCapacityHours: filteredBaseCapacityHours.map(row => ({
+                    capacityStreamId: row.csId,
+                    days: row.days,
+                })),
+                appointmentSlots: defaultCapacityTableState.tableData.appointmentSlots.map(row => ({
+                    capacityStreamId: row.csId,
+                    startTime: row.startTime,
+                    endTime: row.endTime,
+                    days: row.days,
+                })),
+            };
+        } else {
+            requestBody = {
+                serviceTerritory: defaultCapacityFilterState.selectedTerritoryId,
+                customDateId: defaultCapacityFilterState.selectedCustDateId,
+                calendarization: defaultCapacityFilterState.selectedCalendarization,
+                startDate: defaultCapacityFilterState.startDate,
+                endDate: defaultCapacityFilterState.endDate,
+                username: 'swapnil@g.com',
+                bulkTerritories: [],
+                baseCapacityHours: tableDataChanges.baseCapacityHours,
+                appointmentSlots: tableDataChanges.appointmentSlots,
+            };
+        }
 
         try {
             const data = await axiosInstance.post(
@@ -244,6 +273,10 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
 
                 setIsTableDataEdited(false);
                 setOpenDeleteModal(false);
+
+                if (onCalendarizationUpdate) {
+                    onCalendarizationUpdate(false);
+                }
             } else {
                 setDeleteResponseModal({
                     open: true,
@@ -376,7 +409,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                         <div style={{ flex: '0 0 auto', minWidth: '800px' }}>
                             {
                                 defaultCapacityTableState.tableData.baseCapacityHours.length !== 0 &&
-                                <CapacityStream
+                                <CapacityStreamTable
                                     capacitySlotsData={defaultCapacityTableState.tableData?.baseCapacityHours}
                                     defaultCapacityTableState={defaultCapacityTableState}
                                     updateDefaultCapacityTableState={updateDefaultCapacityTableState}
