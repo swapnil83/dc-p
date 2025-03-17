@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { Box, Button, IconButton, Modal, Typography } from "@mui/material";
 import BulkSubmissionIcon from '@mui/icons-material/Publish';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import ReplayIcon from '@mui/icons-material/Replay';
 
+import '../../../index.css';
 import { DefaultCapacityTableState } from './DefaultCapacityTable.types';
 import { DefaultCapacityFilterState, LocationsState } from '../DefaultCapacityFilter/DefaultCapacityFilter.types';
-// import BulkTerritoriesSelection from '../BulkTerritoriesSelection/BulkTerritoriesSelection';
-import '../../../index.css';
+import BulkTerritoriesSelection from '../BulkTerritoriesSelection/BulkTerritoriesSelection';
 import CapacityStreamTable from '../CapacityStreamTable/CapacityStreamTable';
 import AppointmentSlotsTable from '../AppointmentSlotsTable/AppointmentSlotsTable';
 import { useSelector } from 'react-redux';
@@ -43,7 +43,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     setShowDefaultCapacityTable,
     isTableDataEdited,
     setIsTableDataEdited,
-    // locationsState,
+    locationsState,
     defaultCapacityFilterState,
     initialData,
     setInitialData,
@@ -52,8 +52,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     console.log('DefaultCapacityTable');
     const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
     const [openResetModal, setOpenResetModal] = useState<boolean>(false);
-    // const [openSubmitModal, setOpenSubmitModal] = useState<boolean>(false);
-    // const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const [tableDataChanges, setTableDataChanges] = useState<{
         baseCapacityHours: Array<{
@@ -135,15 +134,15 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
         setOpenResetModal(false);
     };
 
-    // const handleSidebarOpen = () => {
-    //     setSidebarOpen(true);
-    // };
+    const handleSidebarOpen = () => {
+        setSidebarOpen(true);
+    };
 
-    // const handleSidebarClose = () => {
-    //     setSidebarOpen(false);
-    // };
+    const handleSidebarClose = () => {
+        setSidebarOpen(false);
+    };
 
-    const handleSubmitClick = async () => {
+    const handleSubmitClick = async (bulkTerritoriesId: number[] = []) => {
         let requestBody;
 
         if (defaultCapacityFilterState.selectedCalendarization === "defaultView" || defaultCapacityFilterState.selectedCalendarization === "addCalendarization") {
@@ -159,7 +158,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 startDate: defaultCapacityFilterState.startDate,
                 endDate: defaultCapacityFilterState.endDate,
                 username: 'swapnil@g.com',
-                bulkTerritories: [],
+                bulkTerritories: bulkTerritoriesId,
                 baseCapacityHours: filteredBaseCapacityHours.map(row => ({
                     capacityStreamId: row.csId,
                     days: row.days,
@@ -179,7 +178,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 startDate: defaultCapacityFilterState.startDate,
                 endDate: defaultCapacityFilterState.endDate,
                 username: 'swapnil@g.com',
-                bulkTerritories: [],
+                bulkTerritories: bulkTerritoriesId,
                 baseCapacityHours: tableDataChanges.baseCapacityHours,
                 appointmentSlots: tableDataChanges.appointmentSlots,
             };
@@ -356,24 +355,27 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                             >
                                 <ReplayIcon sx={{ color: '#ffcc00' }} />
                             </IconButton>
-                            <IconButton
-                                // onClick={handleSidebarOpen}
-                                disabled={true}
-                                sx={{
-                                    '&:disabled svg': { color: '#d3d3d3' },
-                                    '&:not(:disabled) svg': { color: '#ffcc00' },
-                                }}
-                            >
-                                <BulkSubmissionIcon sx={{ color: '#ffcc00' }} />
-                                {/* <BulkTerritoriesSelection
+                            <Fragment>
+                                <IconButton
+                                    onClick={handleSidebarOpen}
+                                    sx={{
+                                        '&:disabled svg': { color: '#d3d3d3' },
+                                        '&:not(:disabled) svg': { color: '#ffcc00' },
+                                    }}
+                                >
+                                    <BulkSubmissionIcon sx={{ color: '#ffcc00' }} />
+                                </IconButton>
+                                <BulkTerritoriesSelection
                                     open={sidebarOpen}
                                     onClose={handleSidebarClose}
                                     locationsData={locationsState.states}
-                                /> */}
-                            </IconButton>
+                                    defaultCapacityFilterState={defaultCapacityFilterState}
+                                    handleSubmitClick={handleSubmitClick}
+                                />
+                            </Fragment>
                             <IconButton
                                 disabled={!isTableDataEdited}
-                                onClick={handleSubmitClick}
+                                onClick={() => handleSubmitClick()}
                                 sx={{
                                     '&:disabled svg': { color: '#d3d3d3' },
                                     '&:not(:disabled) svg': { color: '#ffcc00' },
