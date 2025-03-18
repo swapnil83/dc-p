@@ -6,7 +6,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import ReplayIcon from '@mui/icons-material/Replay';
 
 import '../../../index.css';
-import { DefaultCapacityTableState } from './DefaultCapacityTable.types';
+import { DefaultCapacityTableState, DefaultCapacityViewResponse } from './DefaultCapacityTable.types';
 import { DefaultCapacityFilterState, LocationsState } from '../DefaultCapacityFilter/DefaultCapacityFilter.types';
 import BulkTerritoriesSelection from '../BulkTerritoriesSelection/BulkTerritoriesSelection';
 import CapacityStreamTable from '../CapacityStreamTable/CapacityStreamTable';
@@ -53,6 +53,8 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
     const [openResetModal, setOpenResetModal] = useState<boolean>(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [responseSidebarOpen, setResponseSidebarOpen] = useState(false);
+    const [bulkUpdateResponses, setBulkUpdateResponses] = useState<DefaultCapacityViewResponse[]>([]);
 
     const [tableDataChanges, setTableDataChanges] = useState<{
         baseCapacityHours: Array<{
@@ -142,6 +144,11 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
         setSidebarOpen(false);
     };
 
+    const handleResponseSidebarClose = () => {
+        setResponseSidebarOpen(false);
+        setBulkUpdateResponses([]);
+    };
+
     const handleSubmitClick = async (bulkTerritoriesId: number[] = []) => {
         let requestBody;
 
@@ -205,14 +212,21 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 setTableDataChanges({ baseCapacityHours: [], appointmentSlots: [] });
                 setIsTableDataEdited(false);
 
-                const serviceTerritoryName = response.defaultCapcaityViewResponses[0]?.serviceTerritory || 'Unknown Territory';
+                if (bulkTerritoriesId.length > 0) {
+                    // Show response view in the existing sidebar
+                    setBulkUpdateResponses(response.defaultCapcaityViewResponses || []);
+                    setSidebarOpen(false);
+                    setResponseSidebarOpen(true);
+                } else {
+                    const serviceTerritoryName = response.defaultCapcaityViewResponses[0]?.serviceTerritory || 'Unknown Territory';
 
-                // Show success modal with territory
-                setResponseModal({
-                    open: true,
-                    message: 'Your changes have been successfully submitted.',
-                    territory: serviceTerritoryName, // Assuming the response contains the territory
-                });
+                    // Show success modal with territory
+                    setResponseModal({
+                        open: true,
+                        message: 'Your changes have been successfully submitted.',
+                        territory: serviceTerritoryName, // Assuming the response contains the territory
+                    });
+                }
 
                 // Call the callback to re-fetch calendarization data
                 if (onCalendarizationUpdate) {
@@ -371,6 +385,15 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                                     locationsData={locationsState.states}
                                     defaultCapacityFilterState={defaultCapacityFilterState}
                                     handleSubmitClick={handleSubmitClick}
+                                />
+                                <BulkTerritoriesSelection
+                                    open={responseSidebarOpen}
+                                    onClose={handleResponseSidebarClose}
+                                    locationsData={locationsState.states}
+                                    defaultCapacityFilterState={defaultCapacityFilterState}
+                                    handleSubmitClick={handleSubmitClick}
+                                    isResponseView={true}
+                                    responseData={bulkUpdateResponses}
                                 />
                             </Fragment>
                             <IconButton

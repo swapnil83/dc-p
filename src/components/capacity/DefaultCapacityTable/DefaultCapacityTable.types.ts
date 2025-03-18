@@ -52,3 +52,10 @@ export interface DefaultCapacityTableState {
     errorMessage: string;
     isLoading: boolean;
 };
+
+export interface DefaultCapacityViewResponse {
+    serviceTerritory: string;
+    serviceTerritoryId: number;
+    message: string;
+    dateRanges: string[];
+}
