@@ -213,10 +213,26 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 setIsTableDataEdited(false);
 
                 if (bulkTerritoriesId.length > 0) {
-                    // Show response view in the existing sidebar
-                    setBulkUpdateResponses(response.defaultCapcaityViewResponses || []);
-                    setSidebarOpen(false);
-                    setResponseSidebarOpen(true);
+
+                    // Check if defaultCapcaityViewResponses has objects and at least one has message: "Failure"
+                    const hasFailures = Array.isArray(response.defaultCapcaityViewResponses) &&
+                        response.defaultCapcaityViewResponses.length > 0 &&
+                        response.defaultCapcaityViewResponses.some((item: DefaultCapacityViewResponse) => item.message === "Failure");
+
+                    if (hasFailures) {
+                        // Show response view in the existing sidebar if there are failures
+                        setBulkUpdateResponses(response.defaultCapcaityViewResponses || []);
+                        setSidebarOpen(false);
+                        setResponseSidebarOpen(true);
+                    } else {
+                        // Show success modal if there are no failures
+                        setResponseModal({
+                            open: true,
+                            message: 'Bulk update completed successfully with no failures.',
+                            territory: undefined,
+                        });
+                        setSidebarOpen(false);
+                    }
                 } else {
                     const serviceTerritoryName = response.defaultCapcaityViewResponses[0]?.serviceTerritory || 'Unknown Territory';
 
