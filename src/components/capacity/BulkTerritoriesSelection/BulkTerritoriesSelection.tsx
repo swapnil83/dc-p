@@ -173,7 +173,7 @@ const BulkTerritoriesSelection: React.FC<BulkTerritoriesSelectionProps> = ({
             state.markets.forEach((market) => {
                 market.serviceTerritories.forEach((territory) => {
                     const failedEntries = responseData.filter(
-                        (r) => r.serviceTerritory === territory.territory && r.message === 'Failure'
+                        (r) => r.serviceTerritory === territory.territory && r.message.startsWith("Failure")
                     );
                     if (failedEntries.length > 0) {
                         failedEntries.forEach((entry) => {

@@ -41,7 +41,7 @@ const getOverlapInfo = (node: State | Market | ServiceTerritory, responseData: D
         );
     } else if (isServiceTerritory(node)) {
         const failedTerritories = responseData.filter(
-            (r) => r.serviceTerritory === node.territory && r.message === 'Failure'
+            (r) => r.serviceTerritory === node.territory && r.message.startsWith("Failure")
         );
         count = failedTerritories.length;
         dateRanges = failedTerritories.flatMap((r) => r.dateRanges);

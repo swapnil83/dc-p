@@ -204,7 +204,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
 
             const response: any = data.data;
 
-            if (response.baseResponse.responseStatus === 'Success') {
+            if (response.baseResponse.responseStatus === 'Success' || response.baseResponse.responseStatus === 'Partial Success') {
                 setInitialData({
                     baseCapacityHours: defaultCapacityTableState.tableData.baseCapacityHours,
                     appointmentSlots: defaultCapacityTableState.tableData.appointmentSlots,
@@ -214,14 +214,14 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
 
                 if (bulkTerritoriesId.length > 0) {
 
-                    // Check if defaultCapcaityViewResponses has objects and at least one has message: "Failure"
-                    const hasFailures = Array.isArray(response.defaultCapcaityViewResponses) &&
-                        response.defaultCapcaityViewResponses.length > 0 &&
-                        response.defaultCapcaityViewResponses.some((item: DefaultCapacityViewResponse) => item.message === "Failure");
+                    // Check if defaultCapacaityViewResponses has objects and at least one has message: "Failure"
+                    const hasFailures = Array.isArray(response.defaultCapacaityViewResponses) &&
+                        response.defaultCapacaityViewResponses.length > 0 &&
+                        response.defaultCapacaityViewResponses.some((item: DefaultCapacityViewResponse) => item.message.startsWith("Failure"));
 
                     if (hasFailures) {
                         // Show response view in the existing sidebar if there are failures
-                        setBulkUpdateResponses(response.defaultCapcaityViewResponses || []);
+                        setBulkUpdateResponses(response.defaultCapacaityViewResponses || []);
                         setSidebarOpen(false);
                         setResponseSidebarOpen(true);
                     } else {
@@ -234,7 +234,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                         setSidebarOpen(false);
                     }
                 } else {
-                    const serviceTerritoryName = response.defaultCapcaityViewResponses[0]?.serviceTerritory || 'Unknown Territory';
+                    const serviceTerritoryName = response.defaultCapacaityViewResponses[0]?.serviceTerritory || 'Unknown Territory';
 
                     // Show success modal with territory
                     setResponseModal({
