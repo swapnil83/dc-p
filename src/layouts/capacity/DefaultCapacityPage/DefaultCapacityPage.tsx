@@ -15,6 +15,7 @@ import { transformAppointmentSlots } from '../../../utility/transformAppointment
 import Spinner from '../../../components/common/Spinner/Spinner';
 import axiosInstance from '../../../api/axiosInstance';
 import { formatDate } from '../../../utility/dateUtility';
+import { deepCopy } from '../../../utility/deepCopy';
 
 type DefaultCapacityPageProps = {};
 
@@ -91,15 +92,17 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
 
         if (capacityStream.baseResponse.responseStatus === 'Success') {
             const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
+            const deepCopiedBaseCapacityHours = deepCopy(initialBaseCapacityHours);
+
             updateDefaultCapacityTableState({
                 tableData: {
                     appointmentSlots: [],
-                    baseCapacityHours: initialBaseCapacityHours,
+                    baseCapacityHours: deepCopiedBaseCapacityHours,
                 }
             });
             setInitialData((prevState) => ({
                 ...prevState,
-                baseCapacityHours: initialBaseCapacityHours,
+                baseCapacityHours: deepCopiedBaseCapacityHours,
             }));
         }
 
@@ -111,17 +114,18 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
         if (appointmentSlots.baseResponse.responseStatus === 'Success' && defaultCapacityFilterState.selectedTerritoryId) {
 
             const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+            const deepCopiedAppointmentSlots = deepCopy(initialAppointmentSlots);
 
             updateDefaultCapacityTableState({
                 tableData: {
-                    baseCapacityHours: defaultCapacityTableState.tableData.baseCapacityHours,
-                    appointmentSlots: initialAppointmentSlots,
+                    baseCapacityHours: deepCopy(defaultCapacityTableState.tableData.baseCapacityHours),
+                    appointmentSlots: deepCopiedAppointmentSlots,
                 }
             });
 
             setInitialData((prevState) => ({
                 ...prevState,
-                appointmentSlots: initialAppointmentSlots,
+                appointmentSlots: deepCopiedAppointmentSlots,
             }));
         }
     }, [defaultCapacityFilterState.selectedTerritoryId]);

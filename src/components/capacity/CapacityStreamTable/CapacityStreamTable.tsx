@@ -56,7 +56,12 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
     const enabledDays: string[] = startDate && endDate ? getDaysInRange(new Date(startDate), new Date(endDate)) : daysOfWeek;
 
     const handleCellValueChange = (rowIndex: number, columnId: string, value: string) => {
-        const newData = [...capacitySlotsData];
+        // Create a deep copy of capacitySlotsData
+        const newData = capacitySlotsData.map(row => ({
+            ...row,
+            days: { ...row.days },
+        }));
+
         const numericValue = parseFloat(value);
 
         if (!isNaN(numericValue)) {
@@ -66,7 +71,7 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
                 days: { ...newData[rowIndex].days, [columnId]: roundedValue },
             };
 
-            // Update the "Territory Level" row sum for the edited column
+            // Update the "Territory Level" row sum
             if (columnId !== 'capacityStream') {
                 const territoryRow = newData.find((row) => row.capacityStream === "Territory Level");
                 if (territoryRow) {
@@ -76,8 +81,8 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
                             const value = row.days?.[columnId as keyof typeof row.days] || 0;
                             return acc + value;
                         }, 0);
-                    const roundedValue = Math.round(sum * 100) / 100;
-                    territoryRow.days[columnId as keyof typeof territoryRow.days] = roundedValue;
+                    const roundedSum = Math.round(sum * 100) / 100;
+                    territoryRow.days[columnId as keyof typeof territoryRow.days] = roundedSum;
                 }
             }
 
@@ -108,21 +113,22 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
                         : [
                             ...prevChanges.baseCapacityHours,
                             {
-                                capacityStreamId, // Ensure this is a number
+                                capacityStreamId,
                                 days: { [columnId]: roundedValue },
                             },
                         ];
 
                 return {
-                    ...prevChanges, // Preserve the existing appointmentSlots
+                    ...prevChanges,
                     baseCapacityHours: updatedBaseCapacityHours,
                 };
             });
 
+            // Update table state with the new data
             updateDefaultCapacityTableState({
                 tableData: {
                     baseCapacityHours: newData,
-                    appointmentSlots: defaultCapacityTableState.tableData.appointmentSlots,
+                    appointmentSlots: [...defaultCapacityTableState.tableData.appointmentSlots],
                 },
             });
         }
