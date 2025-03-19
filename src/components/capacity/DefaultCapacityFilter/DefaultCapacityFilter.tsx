@@ -330,12 +330,7 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
                 setShowDefaultCapacityTable(false);
             }
 
-            if (value === "defaultView") {
-                updateDefaultCapacityFilterState({
-                    startDate: null,
-                    endDate: null
-                });
-            } else if (value === "addCalendarization") {
+            if (value === "defaultView" || value === "addCalendarization") {
                 updateDefaultCapacityFilterState({
                     startDate: null,
                     endDate: null

@@ -55,6 +55,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [responseSidebarOpen, setResponseSidebarOpen] = useState(false);
     const [bulkUpdateResponses, setBulkUpdateResponses] = useState<DefaultCapacityViewResponse[]>([]);
+    const [resetButtonEnabled, setResetButtonEnabled] = useState<boolean>(false);
 
     const [tableDataChanges, setTableDataChanges] = useState<{
         baseCapacityHours: Array<{
@@ -96,13 +97,13 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     const { data: appointmentSlots } = useSelector((state: RootState) => state.appointmentSlots);
 
     const deleteIconDisabled = selectedCalendarization === "addCalendarization";
+    const isDefaultOrAdd = selectedCalendarization === "defaultView" || selectedCalendarization === "addCalendarization";
 
-    // monitor changes to table data to enable/disable Reset button
     useEffect(() => {
-        const hasDataChanged =
-            JSON.stringify(defaultCapacityTableState.tableData) !== JSON.stringify(initialData);
+        const hasDataChanged = JSON.stringify(defaultCapacityTableState.tableData) !== JSON.stringify(initialData);
+        setResetButtonEnabled(hasDataChanged);
         setIsTableDataEdited(hasDataChanged);
-    }, [defaultCapacityTableState.tableData, initialData, setIsTableDataEdited]);
+    }, [defaultCapacityTableState.tableData, initialData]);
 
     const handleDeleteClick = () => {
         if (!deleteIconDisabled) {
@@ -115,7 +116,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     };
 
     const handleResetClick = () => {
-        if (isTableDataEdited) {
+        if (resetButtonEnabled) {
             setOpenResetModal(true);
         }
     };
@@ -130,6 +131,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
         setTableDataChanges({ baseCapacityHours: [], appointmentSlots: [] });
         setOpenResetModal(false);
         setIsTableDataEdited(false);
+        setResetButtonEnabled(false);
     };
 
     const handleCancelReset = () => {
@@ -152,8 +154,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
     const handleSubmitClick = async (bulkTerritoriesId: number[] = []) => {
         let requestBody;
 
-        if (defaultCapacityFilterState.selectedCalendarization === "defaultView" || defaultCapacityFilterState.selectedCalendarization === "addCalendarization") {
-
+        if (isDefaultOrAdd) {
             const filteredBaseCapacityHours = defaultCapacityTableState.tableData.baseCapacityHours.filter(
                 row => row.capacityStream !== "Territory Level"
             );
@@ -211,6 +212,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 });
                 setTableDataChanges({ baseCapacityHours: [], appointmentSlots: [] });
                 setIsTableDataEdited(false);
+                setResetButtonEnabled(false);
 
                 if (bulkTerritoriesId.length > 0) {
 
@@ -281,7 +283,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 const territoryName = defaultCapacityFilterState.selectedTerritory;
                 setDeleteResponseModal({
                     open: true,
-                    message: response.baseResponse.message,
+                    message: response.baseResponse.message || 'Data has been successfully deleted.',
                     territory: territoryName,
                 });
 
@@ -301,6 +303,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                 });
 
                 setIsTableDataEdited(false);
+                setResetButtonEnabled(false);
                 setOpenDeleteModal(false);
 
                 if (onCalendarizationUpdate) {
@@ -377,7 +380,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                         >
                             <IconButton
                                 onClick={handleResetClick}
-                                disabled={!isTableDataEdited}
+                                disabled={!resetButtonEnabled}
                                 sx={{
                                     '&:disabled svg': { color: '#d3d3d3' },
                                     '&:not(:disabled) svg': { color: '#ffcc00' },
@@ -413,7 +416,7 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                                 />
                             </Fragment>
                             <IconButton
-                                disabled={!isTableDataEdited}
+                                disabled={!isDefaultOrAdd && !isTableDataEdited}
                                 onClick={() => handleSubmitClick()}
                                 sx={{
                                     '&:disabled svg': { color: '#d3d3d3' },

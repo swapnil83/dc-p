@@ -55,8 +55,11 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
 
     const enabledDays: string[] = startDate && endDate ? getDaysInRange(new Date(startDate), new Date(endDate)) : daysOfWeek;
 
-    const handleCellValueChange = (rowIndex: number, columnId: string, value: string) => {
-        // Create a deep copy of capacitySlotsData
+    const truncateToTwoDecimals = (value: number): number => {
+        return Math.floor(value * 100) / 100; // Truncate to 2 decimal places
+    };
+
+    const handleCellValueChange = (rowIndex: number, columnId: string, value: string, previousValue: number = 0) => {
         const newData = capacitySlotsData.map(row => ({
             ...row,
             days: { ...row.days },
@@ -64,102 +67,123 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
 
         const numericValue = parseFloat(value);
 
-        if (!isNaN(numericValue)) {
-            const roundedValue = Math.round(numericValue * 100) / 100;
-            newData[rowIndex] = {
-                ...newData[rowIndex],
-                days: { ...newData[rowIndex].days, [columnId]: roundedValue },
-            };
+        if (isNaN(numericValue) || value === '') {
+            return; // Handled by onBlur
+        }
 
-            // Update the "Territory Level" row sum
-            if (columnId !== 'capacityStream') {
-                const territoryRow = newData.find((row) => row.capacityStream === "Territory Level");
-                if (territoryRow) {
-                    const sum = newData
-                        .filter((row) => !row.isDisabled)
-                        .reduce((acc, row) => {
-                            const value = row.days?.[columnId as keyof typeof row.days] || 0;
-                            return acc + value;
-                        }, 0);
-                    const roundedSum = Math.round(sum * 100) / 100;
-                    territoryRow.days[columnId as keyof typeof territoryRow.days] = roundedSum;
-                }
+        // Apply restrictions
+        let finalValue = numericValue;
+        if (numericValue < 0 || numericValue > 999) {
+            finalValue = previousValue; // Revert to previous value for negative or > 999
+        }
+
+        const truncatedValue = truncateToTwoDecimals(finalValue); // Truncate to 2 decimal places
+        newData[rowIndex] = {
+            ...newData[rowIndex],
+            days: { ...newData[rowIndex].days, [columnId]: truncatedValue },
+        };
+
+        // Update "Territory Level" row sum
+        if (columnId !== 'capacityStream') {
+            const territoryRow = newData.find((row) => row.capacityStream === "Territory Level");
+            if (territoryRow) {
+                const sum = newData
+                    .filter((row) => !row.isDisabled)
+                    .reduce((acc, row) => {
+                        const value = row.days?.[columnId as keyof typeof row.days] || 0;
+                        return acc + value;
+                    }, 0);
+                const truncatedSum = truncateToTwoDecimals(sum); // Truncate sum to 2 decimal places
+                territoryRow.days[columnId as keyof typeof territoryRow.days] = truncatedSum;
+            }
+        }
+
+        // Update table data changes
+        setTableDataChanges((prevChanges) => {
+            const capacityStreamId = newData[rowIndex].csId;
+            if (capacityStreamId === undefined) {
+                throw new Error("capacityStreamId is undefined");
             }
 
-            // Update the changes state
-            setTableDataChanges((prevChanges) => {
-                const capacityStreamId = newData[rowIndex].csId;
-                if (capacityStreamId === undefined) {
-                    throw new Error("capacityStreamId is undefined");
-                }
+            const existingChangeIndex = prevChanges.baseCapacityHours.findIndex(
+                (change) => change.capacityStreamId === capacityStreamId
+            );
 
-                const existingChangeIndex = prevChanges.baseCapacityHours.findIndex(
-                    (change) => change.capacityStreamId === capacityStreamId
-                );
+            const updatedBaseCapacityHours =
+                existingChangeIndex !== -1
+                    ? prevChanges.baseCapacityHours.map((change, index) =>
+                        index === existingChangeIndex
+                            ? {
+                                ...change,
+                                days: {
+                                    ...change.days,
+                                    [columnId]: truncatedValue,
+                                },
+                            }
+                            : change
+                    )
+                    : [
+                        ...prevChanges.baseCapacityHours,
+                        {
+                            capacityStreamId,
+                            days: { [columnId]: truncatedValue },
+                        },
+                    ];
 
-                const updatedBaseCapacityHours =
-                    existingChangeIndex !== -1
-                        ? prevChanges.baseCapacityHours.map((change, index) =>
-                            index === existingChangeIndex
-                                ? {
-                                    ...change,
-                                    days: {
-                                        ...change.days,
-                                        [columnId]: roundedValue,
-                                    },
-                                }
-                                : change
-                        )
-                        : [
-                            ...prevChanges.baseCapacityHours,
-                            {
-                                capacityStreamId,
-                                days: { [columnId]: roundedValue },
-                            },
-                        ];
+            return {
+                ...prevChanges,
+                baseCapacityHours: updatedBaseCapacityHours,
+            };
+        });
 
-                return {
-                    ...prevChanges,
-                    baseCapacityHours: updatedBaseCapacityHours,
-                };
-            });
-
-            // Update table state with the new data
-            updateDefaultCapacityTableState({
-                tableData: {
-                    baseCapacityHours: newData,
-                    appointmentSlots: [...defaultCapacityTableState.tableData.appointmentSlots],
-                },
-            });
-        }
+        // Update table state
+        updateDefaultCapacityTableState({
+            tableData: {
+                baseCapacityHours: newData,
+                appointmentSlots: [...defaultCapacityTableState.tableData.appointmentSlots],
+            },
+        });
     };
 
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>, cell: MRT_Cell<CapacityStreamRowData>, day: string) => {
+    const handleBlur = (
+        e: React.FocusEvent<HTMLInputElement>,
+        cell: MRT_Cell<CapacityStreamRowData>,
+        day: string,
+        previousValue: number = 0
+    ) => {
         const inputElement = e.currentTarget as HTMLInputElement;
+        const inputValue = inputElement.value;
 
-        if (isNaN(Number(inputElement.value)) || inputElement.value === '') {
-            inputElement.value = String(cell.row.original.days[day as keyof typeof cell.row.original.days]);
+        if (isNaN(Number(inputValue)) || inputValue === '') {
+            inputElement.value = String(previousValue); // Revert to previous value
+        } else {
+            const numericValue = parseFloat(inputValue);
+            if (numericValue < 0 || numericValue > 999) {
+                inputElement.value = String(previousValue); // Revert for negative or > 999
+            } else {
+                inputElement.value = String(truncateToTwoDecimals(numericValue)); // Truncate to 2 decimals
+            }
         }
 
-        handleCellValueChange(cell.row.index, day, inputElement.value);
+        handleCellValueChange(cell.row.index, day, inputElement.value, previousValue);
     };
 
     const validateInput = (value: string): boolean => {
-        return /^\d*\.?\d*$/.test(value);
+        const numericValue = parseFloat(value);
+        // Valid if it's a number and within range [0, 999]
+        return /^\d*\.?\d*$/.test(value) && !isNaN(numericValue) && numericValue >= 0 && numericValue <= 999;
     };
 
     const columns: MRT_ColumnDef<CapacityStreamRowData>[] = [
         {
-            accessorKey: 'capacityStream', // Changed from 'category'
-            header: 'Capacity Stream', // Updated header name
+            accessorKey: 'capacityStream',
+            header: 'Capacity Stream',
             enableEditing: false,
             size: 80,
             Cell: ({ cell }: { cell: MRT_Cell<CapacityStreamRowData> }) => {
                 const value = cell.getValue<string>();
                 return (
-                    <div style={{
-                        padding: '8px 16px',
-                    }}>
+                    <div style={{ padding: '8px 16px' }}>
                         {value}
                     </div>
                 );
@@ -171,7 +195,7 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
             enableEditing: (row: { original: CapacityStreamRowData }) => !row.original.isDisabled && enabledDays.includes(day),
             size: 50,
             Cell: ({ cell }: { cell: MRT_Cell<CapacityStreamRowData> }) => {
-                const value = cell.row.original.days[day as keyof typeof cell.row.original.days];
+                const value = cell.row.original.days[day as keyof typeof cell.row.original.days] ?? 0; // Default to 0 if undefined
                 const isDisabled = cell.row.original.isDisabled || !enabledDays.includes(day);
 
                 return (
@@ -190,7 +214,8 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
                 );
             },
             muiEditTextFieldProps: ({ cell }: { cell: MRT_Cell<CapacityStreamRowData> }) => {
-                const [value, setValue] = useState<string>(String(cell.row.original.days[day as keyof typeof cell.row.original.days]));
+                const previousValue = cell.row.original.days[day as keyof typeof cell.row.original.days] ?? 0; // Default to 0 if undefined
+                const [value, setValue] = useState<string>(String(previousValue));
 
                 return {
                     type: 'text',
@@ -208,11 +233,11 @@ const CapacityStreamTable: React.FC<CapacityStreamTableProps> = ({ capacitySlots
                         e.target.style.color = isValid ? 'black' : 'red';
                     },
                     onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-                        handleBlur(e, cell, day);
+                        handleBlur(e, cell, day, previousValue);
                     },
                     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === 'Enter') {
-                            handleCellValueChange(cell.row.index, day, e.currentTarget.value);
+                            handleCellValueChange(cell.row.index, day, e.currentTarget.value, previousValue);
                         }
                     },
                     sx: {
