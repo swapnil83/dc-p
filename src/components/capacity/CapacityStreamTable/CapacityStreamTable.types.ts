@@ -10,7 +10,7 @@ interface BaseResponseInterface {
 }
 
 export interface CapacityStreamApiResponse {
-    capacityStraem: CapacityStream[];
+    capacityStream: CapacityStream[];
     lastUpdatedDate: string;
     baseResponse: BaseResponseInterface;
 };

@@ -11,7 +11,7 @@ interface CapacityStreamState {
 
 const initialState: CapacityStreamState = {
     data: {
-        capacityStraem: [],
+        capacityStream: [],
         lastUpdatedDate: '',
         baseResponse: {
             message: '',

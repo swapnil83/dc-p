@@ -165,8 +165,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             }
 
             if (showDefaultCapacityTable) {
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {
@@ -209,8 +209,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             }
 
             if (showDefaultCapacityTable) {
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {
@@ -256,8 +256,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             }
 
             if (showDefaultCapacityTable) {
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {
@@ -312,8 +312,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             setErrors({ ...errors, startDate: '', endDate: '' });
 
             if (showDefaultCapacityTable) {
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {
@@ -368,8 +368,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             setErrors({ ...errors, startDate: '' });
 
             if (showDefaultCapacityTable) {
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {
@@ -410,8 +410,8 @@ const DefaultCapacityFilter: React.FC<DefaultCapacityFilterProps> = ({
             }
 
             if (showDefaultCapacityTable) {
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {

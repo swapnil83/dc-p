@@ -91,7 +91,7 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
         }
 
         if (capacityStream.baseResponse.responseStatus === 'Success') {
-            const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
+            const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
             const deepCopiedBaseCapacityHours = deepCopy(initialBaseCapacityHours);
 
             updateDefaultCapacityTableState({
@@ -113,7 +113,7 @@ const DefaultCapacityPage: React.FC<DefaultCapacityPageProps> = () => {
         console.log('USEFFECT: RENDERED USEFFECT WHEN TERRITORY CHANGED FOR DEFAULT CAPACITY PAGE');
         if (appointmentSlots.baseResponse.responseStatus === 'Success' && defaultCapacityFilterState.selectedTerritoryId) {
 
-            const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+            const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
             const deepCopiedAppointmentSlots = deepCopy(initialAppointmentSlots);
 
             updateDefaultCapacityTableState({

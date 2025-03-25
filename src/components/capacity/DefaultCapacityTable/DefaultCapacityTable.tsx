@@ -287,8 +287,8 @@ const DefaultCapacityTable: React.FC<DefaultCapacityTableProps> = ({
                     territory: territoryName,
                 });
 
-                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStraem);
-                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStraem, defaultCapacityFilterState.selectedTerritoryId);
+                const initialBaseCapacityHours = transformBaseCapacityHours(capacityStream.capacityStream);
+                const initialAppointmentSlots = transformAppointmentSlots(appointmentSlots.serviceTerritories, capacityStream.capacityStream, defaultCapacityFilterState.selectedTerritoryId);
 
                 updateDefaultCapacityTableState({
                     tableData: {
